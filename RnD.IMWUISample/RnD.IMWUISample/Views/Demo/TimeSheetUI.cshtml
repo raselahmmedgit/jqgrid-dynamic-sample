@@ -1,0 +1,627 @@
+﻿@{
+    ViewBag.Title = "Time Sheet UI";
+}
+<div id="timeSheet-list">
+    <h2>
+        Time Sheet Details Insert Sample</h2>
+    <div id="timeSheetJQGridZone">
+        <table id="timeSheetJQGrid" width="100%"  cellpadding="0"
+            cellspacing="0">
+        </table>
+    </div>
+    <br />
+    <div id="timeSheet-button">
+        <button id="btnSave" class="button">
+            Save
+        </button>
+    </div>
+</div>
+<style type="text/css">
+    #timeSheetJQGridZone
+    {
+        min-width: 500px !important;
+        max-width: 950px !important;
+        height: auto !important;
+        overflow-y: hidden !important;
+        overflow-x: scroll !important;
+    }
+    
+    .ui-jqgrid .ui-jqgrid-bdiv
+    {
+        overflow: hidden !important;
+    }
+    
+    .ui-jqgrid table.ui-jqgrid-ftable
+    {
+        margin: 0px 0px 0px 4px !important;
+    }
+    
+    .ui-jqgrid tr.flexiTotalFooterRow td
+    {
+        font-weight: bold !important;
+    }
+    
+    .ui-jqgrid tr.totalFooterRow td
+    {
+        border-bottom: 1px solid red !important;
+        font-weight: bold !important;
+    }
+    
+    .offday-highlight
+    {
+        color: #00000 !important;
+        background-color: #FCF8E3 !important;
+    }
+    
+    .ui-jqgrid tr.jqgrow td
+    {
+        word-wrap: break-word !important; /* IE 5.5+ and CSS3 */
+        white-space: pre-wrap !important; /* CSS3 */
+        white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+        white-space: -pre-wrap !important; /* Opera 4-6 */
+        white-space: -o-pre-wrap !important; /* Opera 7 */
+    }
+    
+    .ul-submitted
+    {
+        padding: 0px !important;
+        list-style: none !important;
+        margin: 0px !important;
+    }
+    
+    .project-head
+    {
+        padding: 0px !important;
+    }
+</style>
+<script type="text/javascript">
+
+    function ProjectCheck(id) {
+        console.log(id);
+    }
+
+    function CompleteCheck(id) {
+        console.log(id);
+    }
+
+    function SetFooterTotalAndGrandTotalDayOne(grid, e) {
+
+        var sum = $('#' + grid).jqGrid("getCol", "DayOne", false, "sum");
+        var footerRow = $(e.grid.sDiv).find("tr.footrow");
+        var localData = $('#' + grid).jqGrid("getGridParam", "data");
+        var totalRows = localData.length;
+        var totalSum = 0;
+
+        // calculate the value for the second footer row
+        for (var i = 0; i < totalRows; i++) {
+            totalSum += parseFloat(localData[i].DayOne, 10);
+        }
+
+        //var flexiTotalFooterRow;
+
+        var flexiTotalFooterRow = $(e.grid.sDiv).find("tr.flexiTotalFooterRow");
+        if (flexiTotalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            flexiTotalFooterRow = footerRow.clone();
+            flexiTotalFooterRow.removeClass("footrow").addClass("flexiTotalFooterRow ui-widget-content");
+            flexiTotalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            flexiTotalFooterRow.insertAfter(footerRow);
+        }
+
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_CompletedText]").text("Flexi:");
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                        $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number)
+                    );
+
+        //var totalFooterRow;
+
+        var totalFooterRow = $(e.grid.sDiv).find("tr.totalFooterRow");
+        if (totalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            totalFooterRow = footerRow.clone();
+            totalFooterRow.removeClass("footrow").addClass("totalFooterRow ui-widget-content");
+            totalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            totalFooterRow.insertAfter(footerRow);
+        }
+
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_CompletedText]").text("Total:");
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                        $.fmatter.util.NumberFormat(sum, $.jgrid.formatter.number)
+                    );
+
+        //        $('#' + grid).jqGrid("footerData", "set", { CompletedText: "Total:", DayOne: $.fmatter.util.NumberFormat(sum, $.jgrid.formatter.number) });
+
+
+    }
+
+    function CalculateFooterTotalAndFlexiDayOne(grid, e, rowId, cellName, cellValue, flexiValue) {
+
+        var sum = $('#' + grid).jqGrid("getCol", "DayOne", false, "sum");
+
+        var totalSum = parseFloat(sum);
+        var flexiSum = parseFloat(sum) - parseFloat(flexiValue);
+
+        var flexiTotalFooterRow = $(e.grid.sDiv).find("tr.flexiTotalFooterRow");
+        if (flexiTotalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            flexiTotalFooterRow = footerRow.clone();
+            flexiTotalFooterRow.removeClass("footrow").addClass("flexiTotalFooterRow ui-widget-content");
+            flexiTotalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            flexiTotalFooterRow.insertAfter(footerRow);
+        }
+
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                        $.fmatter.util.NumberFormat(flexiSum, $.jgrid.formatter.number)
+                    );
+
+        var totalFooterRow = $(e.grid.sDiv).find("tr.totalFooterRow");
+        if (totalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            totalFooterRow = footerRow.clone();
+            totalFooterRow.removeClass("footrow").addClass("totalFooterRow ui-widget-content");
+            totalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            totalFooterRow.insertAfter(footerRow);
+        }
+
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                        $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number)
+                    );
+
+        //        //Total Sum
+        //        $('#' + grid).jqGrid("footerData", "set", { DayOne: $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number) });
+
+    }
+
+    //Ok
+    function CalculateFooterTotalAndFlexi(grid, e, rowId, cellName, cellValue, flexiValue) {
+
+        var sum = $('#' + grid).jqGrid("getCol", cellName, false, "sum");
+
+        var totalSum = parseFloat(sum);
+        var flexiSum = parseFloat(sum) - parseFloat(flexiValue);
+
+        var flexiTotalFooterRow = $(e.grid.sDiv).find("tr.flexiTotalFooterRow");
+        if (flexiTotalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            flexiTotalFooterRow = footerRow.clone();
+            flexiTotalFooterRow.removeClass("footrow").addClass("flexiTotalFooterRow ui-widget-content");
+            flexiTotalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            flexiTotalFooterRow.insertAfter(footerRow);
+        }
+
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_" + cellName + "]").text(
+                        $.fmatter.util.NumberFormat(flexiSum, $.jgrid.formatter.number)
+                    );
+
+        var totalFooterRow = $(e.grid.sDiv).find("tr.totalFooterRow");
+        if (totalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            totalFooterRow = footerRow.clone();
+            totalFooterRow.removeClass("footrow").addClass("totalFooterRow ui-widget-content");
+            totalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            totalFooterRow.insertAfter(footerRow);
+        }
+
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_" + cellName + "]").text(
+                        $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number)
+                    );
+
+    }
+    //Ok
+
+    //Ok
+    function SetFooterTotalAndFlexiColumnWise(grid, e, columnNameList, footerTextColumnName) {
+
+        for (var i = 0; i <= columnNameList.length - 1; i++) {
+
+            var columnName = columnNameList[i];
+
+            $.extend({
+                threadedEach: SetFooterTotalAndFlexi(grid, e, columnName, footerTextColumnName)
+            });
+        }
+
+    }
+    function SetFooterTotalAndFlexi(grid, e, columnName, footerTextColumnName) {
+
+        var sum = $('#' + grid).jqGrid("getCol", columnName, false, "sum");
+        var footerRow = $(e.grid.sDiv).find("tr.footrow");
+
+        var totalSum = parseFloat(sum);
+
+        var flexiTotalFooterRow = $(e.grid.sDiv).find("tr.flexiTotalFooterRow");
+        if (flexiTotalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            flexiTotalFooterRow = footerRow.clone();
+            flexiTotalFooterRow.removeClass("footrow").addClass("flexiTotalFooterRow ui-widget-content");
+            flexiTotalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            flexiTotalFooterRow.insertAfter(footerRow);
+        }
+
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_" + footerTextColumnName + "]").text("Flexi:");
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_" + columnName + "]").text(
+                        $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number)
+                    );
+
+        var totalFooterRow = $(e.grid.sDiv).find("tr.totalFooterRow");
+        if (totalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            totalFooterRow = footerRow.clone();
+            totalFooterRow.removeClass("footrow").addClass("totalFooterRow ui-widget-content");
+            totalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            totalFooterRow.insertAfter(footerRow);
+        }
+
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_" + footerTextColumnName + "]").text("Total:");
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_" + columnName + "]").text(
+                                $.fmatter.util.NumberFormat(totalSum, $.jgrid.formatter.number)
+                            );
+    }
+    //Ok
+
+    function SetFooterTotalAndFlexiDayOne(grid, e) {
+
+        var sum = $('#' + grid).jqGrid("getCol", "DayOne", false, "sum");
+        var footerRow = $(e.grid.sDiv).find("tr.footrow");
+        //        var localData = $('#' + grid).jqGrid("getGridParam", "data");
+        //        var totalRows = localData.length;
+        //        var totalSum = 0;
+
+        //        // calculate the value for the second footer row
+        //        for (var i = 0; i < totalRows; i++) {
+        //            totalSum += parseFloat(localData[i].DayOne, 10);
+        //        }
+
+        //var flexiTotalFooterRow;
+
+        var flexiTotalFooterRow = $(e.grid.sDiv).find("tr.flexiTotalFooterRow");
+        if (flexiTotalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            flexiTotalFooterRow = footerRow.clone();
+            flexiTotalFooterRow.removeClass("footrow").addClass("flexiTotalFooterRow ui-widget-content");
+            flexiTotalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            flexiTotalFooterRow.insertAfter(footerRow);
+        }
+
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_CompletedText]").text("Flexi:");
+        flexiTotalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                        $.fmatter.util.NumberFormat(sum, $.jgrid.formatter.number)
+                    );
+
+        //var totalFooterRow;
+
+        var totalFooterRow = $(e.grid.sDiv).find("tr.totalFooterRow");
+        if (totalFooterRow.length === 0) {
+            // add second row of the footer if it's not exist
+            totalFooterRow = footerRow.clone();
+            totalFooterRow.removeClass("footrow").addClass("totalFooterRow ui-widget-content");
+            totalFooterRow.children("td").each(function () {
+                e.style.width = ""; // remove width from inline CSS
+            });
+            totalFooterRow.insertAfter(footerRow);
+        }
+
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_CompletedText]").text("Total:");
+        totalFooterRow.find(">td[aria-describedby=" + e.id + "_DayOne]").text(
+                                $.fmatter.util.NumberFormat(sum, $.jgrid.formatter.number)
+                            );
+
+        //        $('#' + grid).jqGrid("footerData", "set", { CompletedText: "Total:", DayOne: $.fmatter.util.NumberFormat(sum, $.jgrid.formatter.number) });
+
+
+    }
+
+    function CheckValidateDataInEditPptions(editOptionElement) {
+        setTimeout(function () {
+            $(editOptionElement).numeric();
+        }, 100);
+    }
+
+    //Ok
+    function MergeGridColumnsHeader(grid, startColumnName, numberOfColumns, titleText) {
+
+        $('#' + grid).jqGrid('setGroupHeaders', {
+            useColSpanStyle: true,
+            groupHeaders: [
+                      { startColumnName: startColumnName, numberOfColumns: numberOfColumns, titleText: '<div style="text-align:center;">' + titleText + '</div>' }
+                  ]
+        });
+
+    }
+    //Ok
+
+    //Ok
+    function SetGridColumnHighLight(grid, columnNameList) {
+
+        var dataIDs = $('#' + grid).getDataIDs();
+
+        //console.log(dataIDs);
+
+        for (var i = 0; i <= dataIDs.length; i++) {
+
+            var rowId = dataIDs[i];
+
+            for (var y = 0; y <= columnNameList.length - 1; y++) {
+
+                var columnName = columnNameList[y];
+
+                $.extend({
+                    threadedEach: SetGridColumnCellHighLight(grid, rowId, columnName)
+                });
+            }
+
+        }
+
+    }
+    function SetGridColumnCellHighLight(grid, rowId, columnName) {
+
+        $('#' + grid).jqGrid('setCell', rowId, columnName, "", 'offday-highlight');
+
+    }
+    //Ok
+
+    $(function () {
+
+        var arrtSetting = function (rowId, val, rawObject, cm) {
+            var attr = rawObject.attr[cm.name], result;
+            if (attr.rowspan) {
+                result = ' rowspan=' + '"' + attr.rowspan + '"';
+            } else if (attr.display) {
+                result = ' style="display:' + attr.display + '"';
+            }
+            return result;
+        };
+
+        $("#timeSheetJQGrid").jqGrid({
+            url: "/Demo/GetTimeSheetDetailsDataRead",
+            datatype: "json",
+            mtype: 'POST',
+            colNames: ['Id',
+                       'ProjectNo',
+                       'Project No',
+                       'IsProject',
+                       'IsApprovalStatus',
+                       'Approval Status',
+                       'IsSubmittedTo',
+                       'SubmittedTo',
+                       'Submitted To',
+                       'IsActivity',
+                       'Activity',
+                       'IsCompleted',
+                       'Completed',
+                       'Is Complete',
+                       'IsEdited',
+
+                       '1',
+                       '2',
+                       '3',
+                       '4',
+                       '5',
+                       '6',
+                       '7',
+                       '8',
+                       '9',
+                       '10',
+                       '11',
+                       '12',
+                       '13',
+                       '14',
+                       '15'
+
+                       ],
+            colModel: [
+                        { name: 'Id', index: 'Id', key: true, hidden: true, sortable: false, width: 50 },
+                        { name: 'ProjectNo', index: 'ProjectNo', hidden: true, sortable: false, width: 50 },
+                        { name: 'ProjectText', index: 'ProjectText', sortable: false, resize: false, align: 'left', hidden: false, classes: 'project-head', width: 100 },
+                        { name: 'IsProject', index: 'IsProject', hidden: true, sortable: false, width: 50 },
+                        { name: 'IsApprovalStatus', index: 'IsApprovalStatus', hidden: true, sortable: false, width: 50 },
+                        { name: 'ApprovalStatus', index: 'ApprovalStatus', align: 'center', sortable: false, width: 100 },
+                        { name: 'IsSubmittedTo', index: 'IsSubmittedTo', hidden: true, sortable: false, width: 50 },
+                        { name: 'SubmittedTo', index: 'SubmittedTo', hidden: true, sortable: false, width: 50 },
+                        { name: 'SubmittedText', index: 'SubmittedText', align: 'center', sortable: false, width: 120 },
+
+                        { name: 'IsActivity', index: 'IsActivity', hidden: true, sortable: false, width: 50 },
+                        { name: 'Activity', index: 'Activity', align: 'center', sortable: false, width: 200 },
+                        { name: 'IsCompleted', index: 'IsCompleted', hidden: true, sortable: false, width: 50 },
+                        { name: 'Completed', index: 'Completed', hidden: true, sortable: false, width: 50 },
+                        { name: 'CompletedText', index: 'CompletedText', align: 'center', sortable: false, width: 100 },
+                        { name: 'IsEdited', index: 'IsEdited', hidden: true, sortable: false, editable: true, width: 50 },
+
+            //{ name: 'DayOne', index: 'DayOne', width: 80, align: 'center', sortable: false, formatter: 'number', editable: true, editrules: { number: true }, classes: 'offday-highlight' },
+                        {name: 'DayOne', index: 'DayOne', align: 'center', sortable: false, width: 60, formatter: 'number', editable: true, editrules: { number: true, maxValue: 24 }, editoptions: { maxlength: 5} },
+                        { name: 'DayTwo', index: 'DayTwo', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true }, classes: 'offday-highlight' },
+                        { name: 'DayThree', index: 'DayThree', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayFour', index: 'DayFour', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayFive', index: 'DayFive', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DaySix', index: 'DaySix', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DaySeven', index: 'DaySeven', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayEight', index: 'DayEight', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayNine', index: 'DayNine', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayTen', index: 'DayTen', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DaySix', index: 'DaySix', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DaySeven', index: 'DaySeven', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayEight', index: 'DayEight', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayNine', index: 'DayNine', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} },
+                        { name: 'DayTen', index: 'DayTen', align: 'center', sortable: false, width: 80, formatter: 'number', editable: true, editrules: { number: true} }
+                        ],
+            cmTemplate: { sortable: false, clearSearch: false },
+            cellEdit: true,
+            //editurl: "clientArray",
+            cellsubmit: 'clientArray',
+            //rowNum: 10,                                //default page size
+            //rowList: [10, 20, 30, 40, 50],                 //option of page size
+            //gridview: true,
+            //rownumbers: true,
+            //headertitles: true,
+            height: "100%",                          //grid height
+            //height: 'auto',
+            //width: "100%",                          //grid width
+            //width: '800',
+            //autowidth: true,
+            //scrollOffset: 0,
+            grouping: false,
+            sortname: 'id',                     //default sort column name
+            sortorder: "desc",                       //sorting order
+            viewrecords: true,                         //by default records show?
+            //scroll: false,
+            //loadonce: false,
+            //shrinkToFit: false,
+            //shrinkToFit: true,
+            multiselect: false,                        //checkbox list
+            footerrow: true,
+            //userDataOnFooter: true,
+            caption: "Time Sheet Details List",
+            loadComplete: function (data) {
+
+                console.log('loadComplete');
+
+                //Merge Cell Need: SortingColumnName FROM SERVER
+                //MergeCheckboxCell('timeSheetJQGrid', 'ProjectText');
+                MergeGridCellGroupWise('timeSheetJQGrid', columnNameList = ["ProjectText", "ApprovalStatus", "SubmittedText"]);
+                //MergeGridCellGroupWise('timeSheetJQGrid', SortingColumnName = ["ProjectText", "ApprovalStatus", "SubmittedText"]);
+
+                ////Set Total an Grand Total
+                //SetFooterTotalAndGrandTotalDayOne('timeSheetJQGrid', this);
+
+                //Set Total an Grand Total Need: columnNameList, footerTextColumnName FROM SERVER
+                //SetFooterTotalAndFlexiDayOne('timeSheetJQGrid', this);
+                SetFooterTotalAndFlexiColumnWise('timeSheetJQGrid', this, columnNameList = ["DayOne", "DayTwo", "DayThree", "DayFour", "DayFive"], footerTextColumnName = "CompletedText");
+
+                //Merge GridColumns Header Need: startColumnName, numberOfColumns FROM SERVER
+                MergeGridColumnsHeader('timeSheetJQGrid', "DayOne", 15, "Days");
+
+                //GridColumn HighLight Need: columnNameList FROM SERVER
+                SetGridColumnHighLight('timeSheetJQGrid', columnNameList = ["DayOne", "DayTwo"]);
+
+                //Resize Column setColProp
+                //$("#timeSheetJQGrid").jqGrid('setColWidth', "ProjectText", '80px');
+                //$("#timeSheetJQGrid").jqGrid('setColWidth', 3, '80px');
+
+                //$("#timeSheetJQGrid").jqGrid('setColProp', 3, '80');
+                //$("#timeSheetJQGrid").jqGrid('setColProp', "ProjectText", '80');
+                //$("#timeSheetJQGrid").jqGrid('setColProp', 'ProjectText', { width: '80px' });
+
+
+
+            },
+            loadError: function (xhr, status, str) {   //function calling when grid load exception occured 
+                console.log(xhr.msg);           //set div text by error message
+            },
+            afterSaveCell: function (rowid, name, val, iRow, iCol) {
+                console.log("afterSaveCell");
+
+                if (rowid != 0) {
+                    ////Set Row Data
+                    //$(this).jqGrid('setCell', rowid, 'Activity', 'XYZ');
+                    //console.log(rowid);
+                    //console.log(name);
+                    //console.log(val);
+                    //console.log(iRow);
+                    //console.log(iCol);
+                    //$(this).jqGrid('setCell', rowid, name, val);
+
+                    //Calculate FooterData
+                    //CalculateFooterTotalAndFlexiDayOne('timeSheetJQGrid', this, rowid, name, val, 8);
+                    CalculateFooterTotalAndFlexi('timeSheetJQGrid', this, rowid, name, val, 8);
+
+                    //Set Row Data
+                    $(this).jqGrid('setCell', rowid, 'IsEdited', 'True');
+                }
+
+                return false;
+            },
+            afterEditCell: function (rowid, name, val, iRow, iCol) {
+                console.log("afterEditCell");
+                if (rowid != 0) { }
+                return false;
+            },
+            //            ondblClickRow: function (rowid) {
+            //                console.log("ondblClickRow");
+
+            //                if (rowid != 0) {
+
+            //                    console.log(rowid);
+
+            //                    //Set Row Data
+            //                    $(this).jqGrid('setCell', rowid, 'IsEdited', 'True');
+            //                }
+
+            //                return false;
+            //            },
+            errorCell: function () {                   //function calling when cell exception occured
+                console.log('An error has occurred while processing your request.');
+            }
+
+        });
+
+        $('#btnSave').click(function () {
+
+            console.log("Save");
+
+
+
+            var jqGrid = $("#timeSheetJQGrid").jqGrid();
+            console.log(jqGrid);
+
+            //var jqGridParam = $("#timeSheetJQGrid").jqGrid('getGridParam');
+            //console.log(jqGridParam);
+
+            var allData = $("#timeSheetJQGrid").jqGrid('getRowData');
+            //console.log(allData);
+
+            for (var i = 0; i <= allData.length; i++) {
+
+                //console.log(allData[i]);
+
+                var id = allData[i].Id;
+                var projectNo = allData[i].ProjectNo;
+                var dayOne = allData[i].DayOne;
+
+            }
+
+            //            //Selected Row Data
+            //            var grid = $("#timeSheetJQGrid").jqGrid();
+            //            //select grid row by id
+            //            var selectRowKey = grid.getGridParam("selrow");  //selected row key no as array           
+            //            //selected row key no.
+            //            if (selectRowKey > 0) {
+            //                //get row collection from grid.
+            //                var selectedRowObject = $("#timeSheetJQGrid").getRowData(selectRowKey);
+
+            //                console.log(selectedRowObject);
+            //            }
+            //            //End Selected Row Data
+
+            //Edited Grid Row Data
+            var editGridRowData = $("#grid_id").jqGrid('editGridRow');
+            console.log(editGridRowData);
+
+            //Edited Row Data
+            var editRowData = $("#grid_id").jqGrid('editRow');
+            console.log(editRowData);
+
+            return false;
+
+        });
+
+    });
+
+</script>

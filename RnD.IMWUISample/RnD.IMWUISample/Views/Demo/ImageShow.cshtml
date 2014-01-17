@@ -1,0 +1,37 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title></title>
+
+    <script type="text/javascript" src="jquery.min.js"></script>
+
+    <script type="text/javascript">
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    $('#blah').attr('src', e.target.result);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        $(function () {
+
+            $("#files1").change(function () {
+                readURL(this);
+            });
+
+        });
+            
+    </script>
+
+</head>
+<body>
+    <form id="form1" runat="server">
+    <div>
+        <input type="file" id="files1" name="files[]" />
+        <img height="100px" width="100px" id="blah" src="#" alt="your image" />
+    </div>
+    </form>
+</body>
+</html>

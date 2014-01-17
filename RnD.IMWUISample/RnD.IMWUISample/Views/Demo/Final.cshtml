@@ -1,0 +1,231 @@
+﻿@{
+    ViewBag.Title = "Dynamic Time Sheet UI";
+}
+<div id="timeSheet-list">
+    <h2>
+        Dynamic Time Sheet Details Insert Sample</h2>
+    <div id="timeSheetForm">
+        <div>
+            <div>
+                <input type="hidden" id="hdFortnightType" name="hdFortnightType" value="" />
+                <input type="hidden" id="hdFortnightDayNumber" name="hdFortnightDayNumber" value="" />
+                <input type="hidden" id="hdMergeCellGroupColumnNameList" name="hdMergeCellGroupColumnNameList"
+                    value="" />
+                <input type="hidden" id="hdFooterColumnNameList" name="hdFooterColumnNameList" value="" />
+                <input type="hidden" id="hdFooterTextColumnName" name="hdFooterTextColumnName" value="" />
+                <input type="hidden" id="hdMergeColumnHeaderStartColumnName" name="hdMergeColumnHeaderStartColumnName"
+                    value="" />
+                <input type="hidden" id="hdMergeColumnHeaderNumberOfColumns" name="hdMergeColumnHeaderNumberOfColumns"
+                    value="" />
+                <input type="hidden" id="hdHighLightColumnNameList" name="hdHighLightColumnNameList"
+                    value="" />
+                <input type="hidden" id="hdOffDayColumnNameList" name="hd" value="" />
+                <input type="hidden" id="hdFlexiValue" name="hd" value="" />
+                <input type="hidden" id="hdJqGridUrl" name="hd" value="" />
+            </div>
+            <div class="editor-field">
+                <strong>Fortnight: </strong>
+                <input type="radio" id="rdFirstFortnight" name="rdFortnight" value="1" checked="checked" />&nbsp;&nbsp;First
+                Fortnight&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" id="rdSecondFortnight" name="rdFortnight"
+                    value="2" />&nbsp;&nbsp;Second Fortnight
+            </div>
+        </div>
+        <br />
+        <div>
+            <button id="btnLoadGrid" class="button">
+                Load Time Sheet
+            </button>
+        </div>
+    </div>
+    <br />
+    <div id="timeSheetJQGridZone">
+        <table id="timeSheetJQGrid" class="scroll" cellpadding="0" cellspacing="0">
+        </table>
+    </div>
+    <br />
+    <div id="timeSheet-button">
+        <button id="btnSave" class="button">
+            Save
+        </button>
+    </div>
+</div>
+<style type="text/css">
+    #timeSheetJQGridZone
+    {
+        width: 950px !important;
+        height: 400px !important;
+        overflow: scroll !important;
+    }
+    .offday-highlight
+    {
+        color: #00000 !important;
+        background-color: #FCF8E3 !important;
+    }
+    
+    .ui-jqgrid tr.jqgrow td
+    {
+        word-wrap: break-word !important; /* IE 5.5+ and CSS3 */
+        white-space: pre-wrap !important; /* CSS3 */
+        white-space: -moz-pre-wrap !important; /* Mozilla, since 1999 */
+        white-space: -pre-wrap !important; /* Opera 4-6 */
+        white-space: -o-pre-wrap !important; /* Opera 7 */
+    }
+    
+    .chk-projectno
+    {
+    }
+    
+    .lbl-projectno
+    {
+    }
+    
+    .rb-submitted
+    {
+    }
+    
+    .chk-complete
+    {
+    }
+    
+    .approval-status
+    {
+    }
+    
+    .ul-submitted
+    {
+        padding: 0px !important;
+        list-style: none !important;
+        margin: 0px !important;
+    }
+</style>
+<script type="text/javascript">
+
+    $(function () {
+
+        $('#btnLoadGrid').click(function () {
+
+            var fortnightId = $('input[name=rdFortnight]:checked').val();
+
+            var timeSheetFilterViewModel = {};
+            timeSheetFilterViewModel.FortnightId = fortnightId;
+
+            var paramValue = JSON.stringify({ viewModel: timeSheetFilterViewModel });
+
+            $.ajax({
+                url: "/Demo/LoadTimeSheetDetails",
+                type: 'POST',
+                dataType: 'json',
+                data: paramValue,
+                contentType: 'application/json; charset=utf-8',
+                success: function (result) {
+
+                    if (result.status == "True") {
+
+                        if (result.data != null) {
+
+                            SetHiddenFieldValue(result.data);
+
+                            var fortnightType = result.data.FortnightType;
+                            var fortnightDayNumber = result.data.FortnightDayNumber;
+
+                            var gridId = "timeSheetJQGrid";
+                            var gridUrl = "/Demo/GetTimeSheetDetailsData?fortnightType=" + fortnightType + "&fortnightDayNumber=" + fortnightDayNumber;
+
+                            //Start if
+                            if (fortnightType == 1 && fortnightDayNumber == 15) {
+
+                                CreateTimeSheetJqGridForFirstFortnight(gridId, gridUrl);
+
+                            }
+                            else if (fortnightType == 2 && fortnightDayNumber == 16) {
+
+                                CreateTimeSheetJqGridForSecondFortnightOf16Days(gridId, gridUrl);
+
+                            }
+                            else if (fortnightType == 2 && fortnightDayNumber == 15) {
+
+                                CreateTimeSheetJqGridForSecondFortnightOf15Days(gridId, gridUrl);
+
+                            }
+                            else if (fortnightType == 2 && fortnightDayNumber == 14) {
+
+                                CreateTimeSheetJqGridForSecondFortnightOf14Days(gridId, gridUrl);
+
+                            }
+                            else if (fortnightType == 2 && fortnightDayNumber == 13) {
+
+                                console.log(gridPostData);
+                                CreateTimeSheetJqGridForSecondFortnightOf13Days(gridId, gridUrl);
+
+                            }
+                            //End if
+
+                        } //End data null if
+
+                    } //End status if
+
+
+                },
+                error: function (objAjaxRequest, strError) {
+                    var respText = objAjaxRequest.responseText;
+
+                    console.log(respText);
+                }
+
+            });
+
+            return false;
+
+        });
+
+        $('#btnSave').click(function () {
+
+            console.log("Save");
+
+            var jqGrid = $("#timeSheetJQGrid").jqGrid();
+            console.log(jqGrid);
+
+            //var jqGridParam = $("#timeSheetJQGrid").jqGrid('getGridParam');
+            //console.log(jqGridParam);
+
+            var allData = $("#timeSheetJQGrid").jqGrid('getRowData');
+            console.log(allData);
+
+            for (var i = 0; i < allData.length; i++) {
+
+                console.log(allData[i]);
+
+                var id = allData[i].Id;
+                var projectNo = allData[i].ProjectNo;
+                var dayOne = allData[i].DayOne;
+
+            }
+
+            //            //Selected Row Data
+            //            var grid = $("#timeSheetJQGrid").jqGrid();
+            //            //select grid row by id
+            //            var selectRowKey = grid.getGridParam("selrow");  //selected row key no as array           
+            //            //selected row key no.
+            //            if (selectRowKey > 0) {
+            //                //get row collection from grid.
+            //                var selectedRowObject = $("#timeSheetJQGrid").getRowData(selectRowKey);
+
+            //                console.log(selectedRowObject);
+            //            }
+            //            //End Selected Row Data
+
+            //            //Edited Grid Row Data
+            //            var editGridRowData = $("#grid_id").jqGrid('editGridRow');
+            //            console.log(editGridRowData);
+
+            //            //Edited Row Data
+            //            var editRowData = $("#grid_id").jqGrid('editRow');
+            //            console.log(editRowData);
+
+            return false;
+
+        });
+
+    });
+
+</script>
